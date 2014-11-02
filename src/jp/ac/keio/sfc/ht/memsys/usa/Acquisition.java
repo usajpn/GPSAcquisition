@@ -35,8 +35,19 @@ public class Acquisition {
             }
 
             // FFT
-            Complex[] fftTransformed = FFT.fft(complex);
+            double[] real = new double[complex.length];
+            double[] imag = new double[complex.length];
+            for (int i=0; i<complex.length; i++) {
+                real[i] = complex[i].re();
+                imag[i] = complex[i].im();
+            }
+//            Complex[] fftTransformed = FFT.fft(complex);
+            FFT.transform(real, imag);
+            Complex[] fftTransformed = new Complex[complex.length];
 
+            for (int i=0; i<complex.length; i++) {
+                fftTransformed[i] = new Complex(real[i], imag[i]);
+            }
 
             // fft transformed * prn
             complex = new Complex[in.length];
@@ -45,7 +56,18 @@ public class Acquisition {
             }
 
             // IFFT
-            Complex[] ifftTransformed = FFT.ifft(complex);
+            double[] reali = new double[complex.length];
+            double[] imagi = new double[complex.length];
+            for (int i=0; i<complex.length; i++) {
+                reali[i] = complex[i].re();
+                imagi[i] = complex[i].im();
+            }
+            FFT.inverseTransform(reali, imagi);
+            Complex[] ifftTransformed = new Complex[complex.length];
+
+            for (int i=0; i<complex.length; i++) {
+                ifftTransformed[i] = new Complex(reali[i], imagi[i]);
+            }
 
             // square the value
             double[] squared = new double[ifftTransformed.length];

@@ -21,5 +21,7 @@ public class Main {
         Acquisition acq = new Acquisition(in, dopplerWipeoffs, prn, numDopplerBins);
         double magt = acq.lookForPeak();
 
+        System.out.println(magt);
+
     }
 }
