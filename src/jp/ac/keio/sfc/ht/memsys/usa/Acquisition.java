@@ -1,0 +1,81 @@
+package jp.ac.keio.sfc.ht.memsys.usa;
+
+import jp.ac.keio.sfc.ht.memsys.usa.util.Complex;
+import jp.ac.keio.sfc.ht.memsys.usa.util.FFT;
+
+import java.util.ArrayList;
+
+/**
+ * Created by usa on 10/31/14.
+ */
+public class Acquisition {
+    private Complex[] in;
+    private Complex[] prn;
+    private ArrayList<Complex[]> dopplerWipeoffs;
+    private int numDopplerBins;
+
+    public Acquisition(Complex[] in, ArrayList<Complex[]> dw, Complex[] prn, int ndb) {
+        this.in = in;
+        this.prn = prn;
+        this.dopplerWipeoffs = dw;
+        this.numDopplerBins = ndb;
+    }
+
+    public double lookForPeak() {
+        double magt = 0;
+        double fftSize = 4000;
+        double fftNormalizationFactor = fftSize * fftSize;
+
+
+        for (int dopplerIndex = 0; dopplerIndex<numDopplerBins; dopplerIndex++) {
+            // multiply doppler by input signal
+            Complex[] complex = new Complex[in.length];
+            for (int i=0; i<in.length; i++) {
+                complex[i] = in[i].times(dopplerWipeoffs.get(dopplerIndex)[i]);
+            }
+
+            // FFT
+            Complex[] fftTransformed = FFT.fft(complex);
+
+
+            // fft transformed * prn
+            complex = new Complex[in.length];
+            for (int i=0; i<in.length; i++) {
+                complex[i] = fftTransformed[i].times(prn[i]);
+            }
+
+            // IFFT
+            Complex[] ifftTransformed = FFT.ifft(complex);
+
+            // square the value
+            double[] squared = new double[ifftTransformed.length];
+            for (int i=0; i<ifftTransformed.length; i++) {
+                squared[i] = ifftTransformed[i].sqr();
+            }
+
+            // find max value
+            double maxValue = findMaxValue(squared);
+
+            // normalize value
+            maxValue = maxValue / (fftNormalizationFactor * fftNormalizationFactor);
+
+            if (magt < maxValue) {
+                magt = maxValue;
+            }
+
+        }
+        return magt;
+    }
+
+    public double findMaxValue(double[] dblArray) {
+        double maxValue = 0;
+
+        for (int i=0; i<dblArray.length; i++) {
+            if (maxValue < Math.max(maxValue, dblArray[i])) {
+                maxValue = dblArray[i];
+            }
+        }
+
+        return maxValue;
+    }
+}
